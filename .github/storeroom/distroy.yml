@@ -21,7 +21,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::954976311612:role/CI-CD_Terraform
+          role-to-assume: arn:aws:iam::954976311612:role/3-tier-terraform-cicd
           aws-region: us-east-1
 
       - name: terraform init
@@ -56,7 +56,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::954976311612:role/CI-CD_Terraform
+          role-to-assume: arn:aws:iam::954976311612:role/3-tier-terraform-cicd
           aws-region: us-east-1
 
       - name: terraform init
@@ -90,7 +90,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::954976311612:role/CI-CD_Terraform
+          role-to-assume: arn:aws:iam::954976311612:role/3-tier-terraform-cicd
           aws-region: us-east-1
 
       - name: terraform init
