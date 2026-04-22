@@ -1,17 +1,26 @@
 name: 3-Tier-Terraform-CI
+
 on: 
   pull_request:
-jobs:
+    branches:
+      - main
 
-  Pre-Test:
+jobs:
+  pre-approval:
+    name: Terraform CI Validation
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
         environment: [dev, stg, prod]
-    runs-on: ubuntu-latest
 
     permissions:
       id-token: write
       contents: read
+    
+    defaults:
+      run:
+        working-directory: terraform
 
     steps:
       - name: Checkout repository
@@ -23,25 +32,57 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::954976311612:role/3-tier-terraform-cicd
-          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::364478544576:role/100DaysOfDevOps
+          aws-region: ap-south-1
+
 
       - name: Terraform init
-        working-directory: terraform
         run: terraform init -lock-timeout=300s
 
+      - name: Terraform Format Check 
+        run: terraform fmt -check -recursive
+
       - name: Terraform create & select workspace
-        working-directory: terraform
         run: |
           terraform workspace select ${{matrix.environment}} || terraform workspace new ${{matrix.environment}}
 
-      - name: Terraform Validate 
-        working-directory: terraform
+      - name: Terraform Validate
         run: terraform validate
 
+      # -------------------------
+      # Setup TFLint
+      # -------------------------
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: Initialize TFLint
+        run: tflint --init
+
+      - name: Run TFLint
+        run: tflint
+
+      
+      # -------------------------
+      # tfsec Security Scan
+      # -------------------------
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: terraform
+
+
+      # -------------------------
+      # Checkov Security + Compliance
+      # -------------------------
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform
+          framework: terraform
+
       - name: Terraform Plan
-        working-directory: terraform
         run: terraform plan -out=tfplan-${{matrix.environment}}
+
 
       - name: upload Artifact
         uses: actions/upload-artifact@v4
@@ -49,6 +90,9 @@ jobs:
           retention-days: 2
           name: tfplan-${{matrix.environment}}
           path: terraform/tfplan-${{matrix.environment}}
+
+      - name: CI Completed       
+        run: echo "Terraform CI checks passed for ${{ matrix.environment }}"
 
 
   
