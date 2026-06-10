@@ -69,6 +69,9 @@ jobs:
   # ======================================================
   deploy-stg:
     needs: deploy-dev
+    env:
+      TF_VAR_db_password: ${{ secrets.TF_VAR_db_password }}
+      TF_VAR_key_name: ${{ secrets.TF_VAR_key_name }}
     runs-on: ubuntu-latest
     environment: stg
 
@@ -118,6 +121,9 @@ jobs:
   # ======================================================
   deploy-prod:
     needs: deploy-stg
+    env:
+      TF_VAR_db_password: ${{ secrets.TF_VAR_db_password }}
+      TF_VAR_key_name: ${{ secrets.TF_VAR_key_name }}
     runs-on: ubuntu-latest
     environment: prod
 
