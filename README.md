@@ -87,6 +87,8 @@ GitHub Actions automates provisioning across environments:
 
 ## 📂 Repository Structure
 
+``` 
+
 .github/workflows/   → GitHub Actions pipelines
 docs/architecture/   → Diagrams & screenshots
 terraform/
@@ -96,7 +98,10 @@ terraform/
 └── terraform.tfvars → Environment variables
 README.md            → Project documentation
 
+
 Code
+
+```
 
 ---
 
@@ -111,6 +116,9 @@ Code
   - `AWS_REGION`
 
 ### Usage
+
+
+
 ```bash
 # Initialize backend
 terraform init
@@ -123,14 +131,23 @@ terraform plan -var-file=terraform.tfvars
 
 # Apply changes
 terraform apply -var-file=terraform.tfvars
-📊 Monitoring & Observability
+
+```
+
+
+### 📊 Monitoring & Observability
 CloudWatch Alarms for CPU, RDS storage, and ALB health
+
 
 Grafana + Prometheus + Loki (optional) for advanced metrics/logs
 
+
 Auto Scaling Groups ensure resilience and cost efficiency
 
-🛡️ Best Practices Implemented
+
+
+### 🛡️ Best Practices Implemented
+
 ✅ Modular Terraform code for reusability
 
 ✅ Remote state management with S3 + DynamoDB locking
@@ -141,16 +158,22 @@ Auto Scaling Groups ensure resilience and cost efficiency
 
 ✅ GitOps-ready with ArgoCD integration
 
-📖 Documentation
+
+
+### 📖 Documentation
 Architecture diagrams available in docs/architecture/
 
 Workflow screenshots included for CI/CD visualization
 
 Example alarms, load balancers, and RDS setup shown in AWS console
 
-👨‍💻 Author
-Sunil Chouhan  
-Cloud & DevOps Engineer in training | AWS | Kubernetes | Terraform | CI/CD
 
-⭐ Contributing
+
+
+# 👨‍💻 Author
+
+## Sunil Chouhan  
+### Cloud & DevOps Engineer in training | AWS | Kubernetes | Terraform | CI/CD
+
+## ⭐ Contributing
 Contributions are welcome! Fork the repo, create a feature branch, and submit a PR.
