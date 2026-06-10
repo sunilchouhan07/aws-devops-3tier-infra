@@ -1,0 +1,99 @@
+# ==========================
+# Terraform
+# ==========================
+
+.terraform/
+.terraform.lock.hcl
+
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform Variables
+*.tfvars
+*.tfvars.json
+
+# Local backend configs
+backend.hcl
+
+# ==========================
+# Environment Variables
+# ==========================
+
+.env
+.env.*
+*.env
+
+# ==========================
+# AWS Credentials
+# ==========================
+
+.aws/
+credentials
+config
+
+# ==========================
+# IDE Files
+# ==========================
+
+.vscode/
+.idea/
+
+# ==========================
+# OS Files
+# ==========================
+
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Logs
+# ==========================
+
+*.log
+
+# ==========================
+# Temporary Files
+# ==========================
+
+tmp/
+temp/
+
+# ==========================
+# Terraform Plan Files
+# ==========================
+
+*.tfplan
+plan.out
+
+# ==========================
+# Sensitive Keys
+# ==========================
+
+*.pem
+*.key
+*.p12
+*.crt
+*.csr
+
+# ==========================
+# Python (if used)
+# ==========================
+
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# ==========================
+# Local Test Files
+# ==========================
+
+terraform.tfvars
+terraform.tfvars.json

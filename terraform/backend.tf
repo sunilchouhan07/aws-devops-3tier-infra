@@ -8,12 +8,12 @@ terraform {
     }
   }
 
-  
+
 
   backend "s3" {
-    bucket         = "backend-state-3-tier"
+    bucket         = "backend-state-bucket-2026"
     key            = "terraform/terraform.tfstate"
-    region         = "us-east-1"
+    region         = "ap-south-1"
     dynamodb_table = "State-lock"
     encrypt        = true
   }

@@ -3,7 +3,7 @@ resource "aws_security_group" "alb_sg" {
   vpc_id      = var.vpc_id
   description = "Security group for Application Load Balancer"
   tags = {
-    Name = "${var.env}-alb-sg"
+    Name        = "${var.env}-alb-sg"
     Environment = var.env
   }
 
@@ -41,7 +41,7 @@ resource "aws_lb" "app_alb" {
 
   security_groups = [aws_security_group.alb_sg.id]
   tags = {
-    Name = "${var.env}-app-alb"
+    Name        = "${var.env}-app-alb"
     Environment = var.env
   }
 
@@ -64,7 +64,7 @@ resource "aws_lb_target_group" "app_tg" {
   }
 
   tags = {
-    Name = "${var.env}-alb-tg"
+    Name        = "${var.env}-alb-tg"
     Environment = var.env
   }
 
