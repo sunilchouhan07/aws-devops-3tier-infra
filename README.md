@@ -1,288 +1,156 @@
-# 🚀 terraform-3tier-ci-cd
+# 🚀 3-Tier Terraform CI/CD Infrastructure on AWS
 
-An end-to-end **Production-Grade 3-Tier AWS Infrastructure Project** built using **Terraform**, **GitHub Actions CI/CD**, and **AWS best practices**.
-
-This project demonstrates how modern DevOps workflows can automate infrastructure provisioning, enforce deployment approvals, isolate environments, and deliver scalable cloud infrastructure using Infrastructure as Code.
-
----
-
-# 📌 Project Overview
-
-The main objective of this project is to build a **real-world 3-tier architecture** where infrastructure changes move through a **safe CI/CD pipeline** before reaching production.
-
-Instead of manually creating AWS resources, the complete infrastructure is managed through Terraform and deployed through GitHub Actions.
-
-### Core Focus Areas:
-
-* **Infrastructure as Code (Terraform)**
-* **CI/CD Automation**
-* **Multi-Environment Deployment**
-* **Remote State Management**
-* **OIDC Authentication**
-* **Approval-Based Production Deployment**
-* **Scalable AWS Architecture**
+This repository provisions and manages a **3-tier architecture (Dev, Staging, Prod)** on AWS using **Terraform** and **GitHub Actions**.  
+It demonstrates **Infrastructure as Code (IaC)**, **automated CI/CD pipelines**, and **scalable cloud-native deployments** with monitoring and observability.
 
 ---
 
-# 🏗️ Architecture Diagram
+## 📐 Architecture Overview
 
-![Architecture Diagram](docs/architecture/architecture-diagram.png)
+![Architecture Diagram](docs/architecture/architecture-di.png)
 
----
+The infrastructure is designed with **high availability, scalability, and observability** in mind:
 
-# 🏗️ Solution Architecture
-
-This project follows the architecture below:
-
-**GitHub → GitHub Actions CI → Terraform Plan → Artifact Store → GitHub Actions CD → AWS Infrastructure**
-
-### Infrastructure Flow:
-
-**Users → ALB → Auto Scaling EC2 Instances → Database Layer**
+- **VPC** with public & private subnets across multiple Availability Zones  
+- **Application Load Balancer (ALB)** for traffic distribution  
+- **Auto Scaling Groups (ASG)** with EC2 instances for compute layer  
+- **Amazon RDS (MySQL)** for persistent database storage  
+- **S3 Backend** for Terraform state management  
+- **CloudWatch Alarms & Logs** for monitoring and alerting  
 
 ---
 
-# 🌐 3-Tier Architecture Breakdown
+## ⚙️ CI/CD Workflow
 
-## 1️⃣ Presentation Layer
+![GitHub Actions Workflow](docs/architecture/Screenshot-ci-cd.png)
 
-* **Application Load Balancer (ALB)**
-* Hosted inside **Public Subnets**
-* Multi-AZ traffic distribution
-* Health checks for backend instances
+GitHub Actions automates provisioning across environments:
 
----
+1. **CI Pipeline (Validate-Infra.yml)**  
+   - Runs on PRs  
+   - Executes `terraform init`, `terraform validate`, and `terraform plan`  
+   - Ensures code quality before merging  
 
-## 2️⃣ Application Layer
-
-* **EC2 Instances**
-* Managed by **Auto Scaling Group**
-* Hosted in **Private Subnets**
-* NGINX installed through user-data
-
----
-
-## 3️⃣ Data Layer
-
-* Database hosted in **Private DB Subnets**
-* Restricted access through **Security Groups**
-* No public exposure
+2. **CD Pipeline (Provision-Infra.yml)**  
+   - Runs on `main` branch push  
+   - Deploys sequentially: **Dev → Staging → Prod**  
+   - Requires **manual approval** before Prod deployment  
+   - Stores Terraform plans as artifacts (`tfplan-dev`, `tfplan-stg`, `tfplan-prod`)  
 
 ---
 
-# ⭐ Key Architecture Features
+## 📊 AWS Console Snapshots
 
-* **Multi-AZ High Availability**
-* **Auto Scaling**
-* **Public / Private Subnet Isolation**
-* **Secure Layer Communication**
-* **Reusable Terraform Modules**
-* **Environment Based Provisioning**
+### EC2 Auto Scaling Groups
+![Auto Scaling Groups](docs/architecture/Screenshot-asg.png)
 
----
-
-# 🌍 Multi-Environment Strategy
-
-This project supports three isolated environments:
-
-* **dev** → Development & testing
-* **stg** → Pre-production validation
-* **prod** → Live production
-
-### Each Environment Uses:
-
-* Same Terraform codebase
-* Separate Terraform Workspace
-* Independent Infrastructure
-* Controlled CI/CD Deployment
+- Separate ASGs for **dev**, **stg**, and **prod**  
+- Each group maintains desired capacity with health checks  
+- Ensures resilience and scaling across AZs  
 
 ---
 
-# 🔁 CI/CD Pipeline (GitHub Actions)
+### Load Balancers
+![Application Load Balancers](docs/architecture/Screenshot-alb.png)
 
-## ✅ Continuous Integration (CI)
-
-Triggered on **Pull Requests**
-
-### CI Steps:
-
-* Checkout Code
-* Terraform Init
-* Terraform Validate
-* Terraform Plan
-
-### Matrix Strategy:
-
-* dev
-* stg
-* prod
-
-### Plan Files Stored As Artifacts:
-
-* `tfplan-dev`
-* `tfplan-stg`
-* `tfplan-prod`
-
-👉 No infrastructure changes are applied during CI.
+- Internet-facing ALBs for each environment  
+- Distributes traffic across healthy EC2 targets  
+- Integrated with CloudWatch alarms for health monitoring  
 
 ---
 
-## 🚀 Continuous Deployment (CD)
+### RDS Databases
+![RDS Instances](docs/architecture/Screenshot-rds.png)
 
-Triggered via:
-
-* `workflow_dispatch`
-* After PR Merge
-
-### Deployment Flow:
-
-### Method 1: Approved Plan Apply
-
-* Download approved tfplan artifact
-* Select workspace
-* Apply reviewed plan only
-
-### Method 2: Controlled Plan + Apply
-
-* Checkout repo
-* Select workspace
-* Terraform plan
-* Terraform apply
-
-### Manual Approvals Required:
-
-* **staging**
-* **production**
-
-👉 Ensures safe deployments.
+- MySQL Community Edition for **dev** and **stg**  
+- Configured with subnet groups for high availability  
+- Managed backups and monitoring enabled  
 
 ---
 
-# 🔐 Security Practices
+### CloudWatch Alarms
+![CloudWatch Alarms](docs/architecture/Screenshot-cloudwatch.png)
 
-* GitHub Actions uses **AWS OIDC**
-* No AWS Access Keys stored
-* Temporary IAM Role credentials
-* GitHub Environment Protection Rules
-* Manual approvals for higher environments
-* Private subnets for workloads and DB
+- CPU utilization alarms for EC2 instances  
+- Storage alarms for RDS  
+- ALB unhealthy host alarms for traffic resilience  
 
 ---
 
-# 📦 Terraform State Management
+### S3 Backend
+![S3 State Management](docs/architecture/Screenshot-s3.png)
 
-* Remote backend using **Amazon S3**
-* State locking using **DynamoDB**
-* Prevents state corruption
-* Enables team collaboration
-
----
-
-# ⚙️ Application Configuration
-
-* NGINX installed using **user-data**
-* Dynamic environment-based web page
-* Same AMI reused across environments
-* Terraform passes environment values
-
-### Example Output:
-
-* **DEV** → Green Theme
-* **STG** → Yellow Theme
-* **PROD** → Red Theme
+- Stores Terraform state files per environment (`dev/`, `stg/`, `prod/`)  
+- Ensures consistency and collaboration with DynamoDB locking  
 
 ---
 
-# 📁 Repository Structure
+## 📂 Repository Structure
 
-```text
-.
-├── .github/workflows/       # CI/CD pipelines
-├── modules/
-│   ├── vpc/
-│   ├── alb/
-│   ├── asg/
-│   └── rds/
-├── backend.tf
-├── variables.tf
-├── outputs.tf
-├── terraform.tfvars
-└── README.md
-```
+.github/workflows/   → GitHub Actions pipelines
+docs/architecture/   → Diagrams & screenshots
+terraform/
+├── backend/       → Remote state configuration
+├── modules/       → Reusable modules (VPC, ALB, ASG, RDS, Monitoring)
+├── *.tf           → Root module configs
+└── terraform.tfvars → Environment variables
+README.md            → Project documentation
+
+Code
 
 ---
 
-# ⭐ Why This Project Is Production-Grade
+## 🚀 Deployment Steps
 
-* Highly available architecture
-* Auto Scaling & fault recovery
-* Deployment approvals
-* Environment isolation
-* Plan-before-apply workflow
-* OIDC secure authentication
-* Remote state + locking
-* Modular Terraform structure
+### Prerequisites
+- AWS account with IAM permissions  
+- Terraform ≥ 1.5  
+- GitHub repository secrets configured:
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
+  - `AWS_REGION`
 
----
+### Usage
+```bash
+# Initialize backend
+terraform init
 
-# 🛠️ Tech Stack
+# Validate configuration
+terraform validate
 
-## Cloud
+# Plan infrastructure
+terraform plan -var-file=terraform.tfvars
 
-* AWS
-* VPC
-* EC2
-* ALB
-* Auto Scaling Group
-* IAM
-* S3
-* DynamoDB
-* RDS
+# Apply changes
+terraform apply -var-file=terraform.tfvars
+📊 Monitoring & Observability
+CloudWatch Alarms for CPU, RDS storage, and ALB health
 
-## DevOps Tools
+Grafana + Prometheus + Loki (optional) for advanced metrics/logs
 
-* Terraform
-* GitHub Actions
-* Linux
-* NGINX
+Auto Scaling Groups ensure resilience and cost efficiency
 
----
+🛡️ Best Practices Implemented
+✅ Modular Terraform code for reusability
 
-# 📚 Key Learnings
+✅ Remote state management with S3 + DynamoDB locking
 
-* Real CI/CD is more than just deploy scripts
-* Safe production deployments need approvals
-* Terraform state management is critical
-* Auto Scaling improves resilience
-* Environment separation reduces risk
-* OIDC is better than static credentials
+✅ Multi-environment separation (Dev, Stg, Prod)
 
----
+✅ Approval gates before production rollout
 
-# 🔮 Future Improvements
+✅ GitOps-ready with ArgoCD integration
 
-* CloudWatch Monitoring & Alerts
-* Security Scanning (tfsec / tflint / checkov)
-* Route53 + HTTPS
-* Drift Detection Pipeline
-* Blue/Green Deployment
-* Kubernetes Migration Path
+📖 Documentation
+Architecture diagrams available in docs/architecture/
 
----
+Workflow screenshots included for CI/CD visualization
 
-# 💼 Resume-Friendly Summary
+Example alarms, load balancers, and RDS setup shown in AWS console
 
-Built a production-grade 3-tier AWS infrastructure using Terraform and GitHub Actions with reusable modules, remote backend, environment-based deployments, approval gates, OIDC authentication, Auto Scaling, ALB, and secure database architecture.
+👨‍💻 Author
+Sunil Chouhan  
+Cloud & DevOps Engineer in training | AWS | Kubernetes | Terraform | CI/CD
 
----
-
-# 👤 Author
-
-**Sunil Chouhan**
-DevOps Learner | Aspiring DevOps Engineer
-
----
-
-# 📌 Final Note
-
-This project focuses on **reliability, safety, scalability, and real-world DevOps practices** rather than just basic resource creation.
+⭐ Contributing
+Contributions are welcome! Fork the repo, create a feature branch, and submit a PR.
