@@ -1,5 +1,6 @@
 module "ec2_asg" {
-  source              = "./modules/asg"
+  source = "./modules/asg"
+
   alb_sg_id           = module.alb.alb_sg_id
   app_vpc_id          = module.vpc.vpc_id
   private_subnets_id  = module.vpc.private_sub_app_ids
@@ -14,5 +15,14 @@ module "ec2_asg" {
   max_size            = 4
   desired_capacity    = 2
   health_check_period = 60
+
+
+  artifact_bucket_name = module.s3.bucket_name
+  artifact_bucket_arn  = module.s3.bucket_arn
+
+  db_host     = module.rds.endpoint
+  db_name     = local.db_name
+  db_password = var.db_password
+  db_user     = local.username
 
 }

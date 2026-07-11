@@ -23,33 +23,6 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-resource "aws_iam_role" "ec2_ssm_role" {
-  name = "${var.env}-ec2-ssm-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
-
-
-resource "aws_iam_role_policy_attachment" "ssm_attach" {
-  role       = aws_iam_role.ec2_ssm_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-
-resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "${var.env}-ec2-profile"
-  role = aws_iam_role.ec2_ssm_role.name
-}
-
 
 
 # Launch Template
@@ -65,6 +38,11 @@ resource "aws_launch_template" "three_tier_lt" {
   user_data = base64encode(
     templatefile("${path.module}/script.sh", {
       environment = var.env
+      artifact_bucket_name = var.artifact_bucket_name
+      db_host     = var.db_host
+      db_name     = var.db_name
+      db_user     = var.db_user
+      db_password = var.db_password
     })
   )
 
@@ -89,6 +67,9 @@ resource "aws_launch_template" "three_tier_lt" {
     }
   }
 }
+
+
+
 
 
 

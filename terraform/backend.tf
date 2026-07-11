@@ -11,7 +11,7 @@ terraform {
 
 
   backend "s3" {
-    bucket         = "backend-state-bucket-2026"
+    bucket         = "three-tier-state"
     key            = "terraform/terraform.tfstate"
     region         = "ap-south-1"
     dynamodb_table = "State-lock"

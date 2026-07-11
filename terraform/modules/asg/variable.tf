@@ -53,3 +53,29 @@ variable "desired_capacity" {
 variable "health_check_period" {
   type = number
 }
+
+
+variable "artifact_bucket_arn" {
+  type = string
+}
+
+variable "artifact_bucket_name" {
+  type = string
+}
+
+variable "db_host" {
+  type = string
+}
+
+variable "db_name" {
+  type = string 
+}
+
+variable "db_user" {
+  type = string
+}
+
+variable "db_password" {
+  type = string
+  sensitive = true
+}

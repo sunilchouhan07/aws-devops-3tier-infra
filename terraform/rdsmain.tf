@@ -1,8 +1,8 @@
 module "rds" {
   source            = "./modules/rdsInstance"
   allocated_storage = local.allocated_storage
-  engine            = "mysql"
-  engine_version    = "8.0"
+  engine            = "postgres"
+  engine_version    = "17"
   db_name           = local.db_name
   username          = local.username
   db_password       = var.db_password

@@ -26,3 +26,7 @@ output "alb_sg_id" {
 output "target_group_arn" {
   value = module.alb.target_group_arn
 }
+
+# output "endpoint" {
+#   value = module.rds.endpoint
+# }
