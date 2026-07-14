@@ -15,8 +15,8 @@ resource "aws_security_group" "rds_sg" {
   }
 
   ingress {
-    from_port       = 3306
-    to_port         = 3306
+    from_port       = 5432
+    to_port         = 5432
     protocol        = "tcp"
     security_groups = [var.app_sg_id]
   }
@@ -41,7 +41,7 @@ resource "aws_db_instance" "rds_db" {
   password = var.db_password
 
   instance_class = var.instance_class
-  port           = 3306
+  port           = 5432
   identifier     = "${var.env}-db"
   multi_az       = true
 
