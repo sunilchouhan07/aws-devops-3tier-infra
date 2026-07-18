@@ -40,7 +40,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::364478544576:role/100DaysOfDevOps
+          role-to-assume: arn:aws:iam::015911059278:role/DevOps-Project
           aws-region: ap-south-1
 
 

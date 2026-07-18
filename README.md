@@ -1,8 +1,21 @@
-# 🚀 # AWS 3-Tier Infrastructure on AWS using Terraform
+# 🚀 AWS 3-Tier Infrastructure on AWS using Terraform
+
+
 
 Production-ready **AWS 3-Tier Infrastructure** built with **Terraform**.
 
 This repository provisions the complete infrastructure required to host scalable web applications on AWS. It follows Infrastructure as Code (IaC) best practices and prepares EC2 instances for automated deployments.
+
+
+![Terraform](https://img.shields.io/badge/Terraform-IaC-7B42BC?logo=terraform)
+
+![AWS](https://img.shields.io/badge/AWS-Cloud-orange?logo=amazonaws)
+
+![GitHub Actions](https://img.shields.io/badge/GitHub-Actions-blue?logo=githubactions)
+
+![License](https://img.shields.io/badge/license-MIT-green)
+
+![Infrastructure](https://img.shields.io/badge/type-Infrastructure-blue)
 
 > **Note**
 >
