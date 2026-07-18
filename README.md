@@ -1,4 +1,4 @@
-# 🚀 AWS 3-Tier Infrastructure with Terraform
+# 🚀 # AWS 3-Tier Infrastructure on AWS using Terraform
 
 Production-ready **AWS 3-Tier Infrastructure** built with **Terraform**.
 
@@ -10,7 +10,7 @@ This repository provisions the complete infrastructure required to host scalable
 >
 > Application deployment is handled separately by:
 >
-> 🔗 employee-management-system
+> 🔗 employee-management-system  
 
 ---
 
@@ -136,23 +136,33 @@ Application Available via ALB
 
 # Repository Structure
 
-```
-terraform/
-│
-├── alb/
-├── asg/
-├── backend/
-├── database/
-├── iam/
-├── networking/
-├── s3/
-├── route53/
-│
-├── main.tf
-├── provider.tf
-├── variables.tf
-├── outputs.tf
-└── terraform.tfvars
+```text
+.
+├── .github/
+│   └── workflows/          # GitHub Actions workflows
+├── docs/                   # Architecture diagrams and screenshots
+├── terraform/
+│   ├── backend/            # Remote backend configuration
+│   ├── modules/
+│   │   ├── app_lb/         # Application Load Balancer
+│   │   ├── asg/            # Auto Scaling Group
+│   │   ├── rdsInstance/    # PostgreSQL RDS
+│   │   ├── s3/             # S3 resources
+│   │   └── vpc/            # Networking
+│   ├── albmain.tf
+│   ├── asgmain.tf
+│   ├── backend.tf
+│   ├── data.tf
+│   ├── locals.tf
+│   ├── output.tf
+│   ├── provider.tf
+│   ├── rdsmain.tf
+│   ├── s3.tf
+│   ├── terraform.tfvars
+│   ├── variable.tf
+│   └── vpcmain.tf
+├── README.md
+└── .gitignore
 ```
 
 ---
@@ -234,7 +244,14 @@ terraform destroy
 
 # Related Repository
 
-Application deployment is managed separately.
+This infrastructure is used by the following application repository.
+
+| Repository | Description |
+|------------|-------------|
+| **Employee Management System** | Full-stack React + Express application with GitHub Actions CI/CD, S3 artifact deployment and AWS Systems Manager (SSM) based deployments. |
+
+🔗 **Application Repository:**  
+https://github.com/sunilchouhan07/employee_management_system
 
 ## Employee Management System
 
