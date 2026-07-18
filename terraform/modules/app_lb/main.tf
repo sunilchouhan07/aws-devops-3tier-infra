@@ -15,9 +15,9 @@ resource "aws_security_group" "alb_sg" {
   }
 
   ingress {
-    from_port = 5000
-    to_port = 5000
-    protocol = "tcp"
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 

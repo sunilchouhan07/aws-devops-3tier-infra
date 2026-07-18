@@ -1,58 +1,88 @@
 #!/bin/bash
 set -euxo pipefail
 
-# --------------------------------------------------
+########################################################
 # Project : AWS 3-Tier Architecture
-# Purpose : Bootstrap EC2 Instance
+# Purpose : EC2 Bootstrap Script
 # Author  : Sunil Chouhan
-# --------------------------------------------------
+########################################################
 
 export DEBIAN_FRONTEND=noninteractive
 
-############################################
+########################################################
 # Update Packages
-############################################
+########################################################
 
 apt update -y
 
-############################################
+########################################################
 # Install Required Packages
-############################################
+########################################################
 
 apt install -y \
     nginx \
     git \
     curl \
     unzip \
-    npm
+    zip \
+    snapd
 
-############################################
+########################################################
+# Install AWS CLI v2
+########################################################
+
+cd /tmp
+
+curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
+    -o awscliv2.zip
+
+unzip -q awscliv2.zip
+
+./aws/install
+
+rm -rf aws awscliv2.zip
+
+########################################################
+# Install Node.js 18
+########################################################
+
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+
+apt update -y
+
+apt install -y nodejs
+
+########################################################
 # Install PM2
-############################################
+########################################################
 
 npm install -g pm2
 
-############################################
-# Clone Repository
-############################################
+########################################################
+# Install Amazon SSM Agent
+########################################################
 
-cd /home/ubuntu
+snap install amazon-ssm-agent --classic || true
 
-if [ ! -d employee_management_system ]; then
-    git clone https://github.com/sunilchouhan07/employee_management_system.git
-fi
+systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service || true
 
-cd employee_management_system
+systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service || true
 
-############################################
-# Backend
-############################################
+########################################################
+# Create Directories
+########################################################
 
-cd backend
+mkdir -p /opt/scripts
 
-npm install
+mkdir -p /opt/employee-management-system/backend
 
-cat > .env <<EOF
+mkdir -p /var/www/html
+
+########################################################
+# Backend Environment File
+########################################################
+
+cat >/opt/employee-management-system/backend/.env <<EOF
 PORT=5000
 
 DB_HOST=${db_host}
@@ -63,33 +93,11 @@ DB_PASSWORD=${db_password}
 DB_SSL=true
 EOF
 
-pm2 start server.js --name backend || pm2 restart backend
+########################################################
+# Configure Nginx
+########################################################
 
-pm2 save
-
-############################################
-# Frontend
-############################################
-
-cd ../frontend
-
-npm install
-
-npm run build
-
-############################################
-# Deploy React Build
-############################################
-
-rm -rf /var/www/html/*
-
-cp -r build/* /var/www/html/
-
-############################################
-# Nginx Configuration
-############################################
-
-cat > /etc/nginx/sites-available/default <<EOF
+cat >/etc/nginx/sites-available/default <<EOF
 server {
 
     listen 80;
@@ -123,24 +131,38 @@ server {
 }
 EOF
 
-############################################
-# Restart Nginx
-############################################
-
-nginx -t
+########################################################
+# Enable Nginx
+########################################################
 
 systemctl enable nginx
 
+nginx -t
+
 systemctl restart nginx
 
-############################################
-# PM2 Startup
-############################################
+########################################################
+# Configure PM2 Startup
+########################################################
 
-pm2 startup systemd -u ubuntu --hp /home/ubuntu
+pm2 startup systemd -u ssm-user --hp /home/ssm-user || true
 
-############################################
-# Bootstrap Complete
-############################################
+########################################################
+# Bootstrap Verification
+########################################################
 
-echo "Deployment completed successfully."
+echo "========== Bootstrap Summary =========="
+
+node -v
+
+npm -v
+
+pm2 -v
+
+nginx -v
+
+aws --version
+
+echo "======================================="
+
+echo "Bootstrap completed successfully."

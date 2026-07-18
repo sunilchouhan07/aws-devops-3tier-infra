@@ -37,12 +37,12 @@ resource "aws_launch_template" "three_tier_lt" {
   # user_data = base64encode(file("${path.module}/${var.script}"))
   user_data = base64encode(
     templatefile("${path.module}/script.sh", {
-      environment = var.env
+      environment          = var.env
       artifact_bucket_name = var.artifact_bucket_name
-      db_host     = var.db_host
-      db_name     = var.db_name
-      db_user     = var.db_user
-      db_password = var.db_password
+      db_host              = var.db_host
+      db_name              = var.db_name
+      db_user              = var.db_user
+      db_password          = var.db_password
     })
   )
 
@@ -96,9 +96,14 @@ resource "aws_autoscaling_group" "three_tier_asg" {
   health_check_grace_period = var.health_check_period
 
   tag {
-    key                 = "Name"
-    value               = "${var.env}-asg"
+    key                 = "Role"
+    value               = "application-server"
     propagate_at_launch = true
+  }
 
+  tag {
+    key                 = "Environment"
+    value               = var.env
+    propagate_at_launch = true
   }
 }

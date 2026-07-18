@@ -68,7 +68,7 @@ variable "db_host" {
 }
 
 variable "db_name" {
-  type = string 
+  type = string
 }
 
 variable "db_user" {
@@ -76,6 +76,6 @@ variable "db_user" {
 }
 
 variable "db_password" {
-  type = string
+  type      = string
   sensitive = true
 }
