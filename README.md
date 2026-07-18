@@ -1,179 +1,329 @@
-# 🚀 3-Tier Terraform CI/CD Infrastructure on AWS
+# 🚀 AWS 3-Tier Infrastructure with Terraform
 
-This repository provisions and manages a **3-tier architecture (Dev, Staging, Prod)** on AWS using **Terraform** and **GitHub Actions**.  
-It demonstrates **Infrastructure as Code (IaC)**, **automated CI/CD pipelines**, and **scalable cloud-native deployments** with monitoring and observability.
+Production-ready **AWS 3-Tier Infrastructure** built with **Terraform**.
 
----
+This repository provisions the complete infrastructure required to host scalable web applications on AWS. It follows Infrastructure as Code (IaC) best practices and prepares EC2 instances for automated deployments.
 
-## 📐 Architecture Overview
-
-![Architecture Diagram](docs/architecture/architecture-di.png)
-
-The infrastructure is designed with **high availability, scalability, and observability** in mind:
-
-- **VPC** with public & private subnets across multiple Availability Zones  
-- **Application Load Balancer (ALB)** for traffic distribution  
-- **Auto Scaling Groups (ASG)** with EC2 instances for compute layer  
-- **Amazon RDS (MySQL)** for persistent database storage  
-- **S3 Backend** for Terraform state management  
-- **CloudWatch Alarms & Logs** for monitoring and alerting  
+> **Note**
+>
+> This repository provisions infrastructure only.
+>
+> Application deployment is handled separately by:
+>
+> 🔗 employee-management-system
 
 ---
 
-## ⚙️ CI/CD Workflow
+# Architecture
 
-![GitHub Actions Workflow](docs/architecture/Screenshot-ci-cd.png)
+![Architecture Diagram](docs/architecture/architecture.png)
 
-GitHub Actions automates provisioning across environments:
+## Infrastructure Components
 
-1. **CI Pipeline (Validate-Infra.yml)**  
-   - Runs on PRs  
-   - Executes `terraform init`, `terraform validate`, and `terraform plan`  
-   - Ensures code quality before merging  
-
-2. **CD Pipeline (Provision-Infra.yml)**  
-   - Runs on `main` branch push  
-   - Deploys sequentially: **Dev → Staging → Prod**  
-   - Requires **manual approval** before Prod deployment  
-   - Stores Terraform plans as artifacts (`tfplan-dev`, `tfplan-stg`, `tfplan-prod`)  
-
----
-
-## 📊 AWS Console Snapshots
-
-### EC2 Auto Scaling Groups
-![Auto Scaling Groups](docs/architecture/Screenshot-asg.png)
-
-- Separate ASGs for **dev**, **stg**, and **prod**  
-- Each group maintains desired capacity with health checks  
-- Ensures resilience and scaling across AZs  
+- Amazon VPC
+- Public & Private Subnets (2 AZ)
+- Internet Gateway
+- NAT Gateway
+- Route Tables
+- Application Load Balancer
+- Auto Scaling Group
+- Launch Template
+- EC2 Instances
+- IAM Roles
+- Security Groups
+- Amazon RDS PostgreSQL
+- Amazon S3
+- DynamoDB
+- AWS Systems Manager (SSM)
 
 ---
 
-### Load Balancers
-![Application Load Balancers](docs/architecture/Screenshot-alb.png)
+# Repository Purpose
 
-- Internet-facing ALBs for each environment  
-- Distributes traffic across healthy EC2 targets  
-- Integrated with CloudWatch alarms for health monitoring  
+This repository is responsible for:
 
----
+- Provisioning AWS Infrastructure
+- Creating networking resources
+- Creating EC2 Auto Scaling Groups
+- Creating Application Load Balancer
+- Creating PostgreSQL Database
+- Creating IAM Roles
+- Creating S3 backend
+- Creating DynamoDB locking table
+- Bootstrapping EC2 instances
+- Preparing servers for application deployments
 
-### RDS Databases
-![RDS Instances](docs/architecture/Screenshot-rds.png)
-
-- MySQL Community Edition for **dev** and **stg**  
-- Configured with subnet groups for high availability  
-- Managed backups and monitoring enabled  
-
----
-
-### CloudWatch Alarms
-![CloudWatch Alarms](docs/architecture/Screenshot-cloudwatch.png)
-
-- CPU utilization alarms for EC2 instances  
-- Storage alarms for RDS  
-- ALB unhealthy host alarms for traffic resilience  
+This repository **does not deploy application code.**
 
 ---
 
-### S3 Backend
-![S3 State Management](docs/architecture/Screenshot-s3.png)
+# EC2 Bootstrap
 
-- Stores Terraform state files per environment (`dev/`, `stg/`, `prod/`)  
-- Ensures consistency and collaboration with DynamoDB locking  
+EC2 instances are automatically configured using **Terraform User Data**.
+
+During instance launch the bootstrap script installs and configures:
+
+- AWS CLI v2
+- Node.js
+- PM2
+- Nginx
+- Amazon SSM Agent
+- Deployment directories
+- Backend environment file
+- Reverse proxy configuration
+
+After provisioning every EC2 instance is immediately ready to receive deployments through AWS Systems Manager.
 
 ---
 
-## 📂 Repository Structure
+# Infrastructure Architecture
 
-``` 
-
-.github/workflows/   → GitHub Actions pipelines
-docs/architecture/   → Diagrams & screenshots
-terraform/
-├── backend/       → Remote state configuration
-├── modules/       → Reusable modules (VPC, ALB, ASG, RDS, Monitoring)
-├── *.tf           → Root module configs
-└── terraform.tfvars → Environment variables
-README.md            → Project documentation
-
-
-Code
-
+```
+                    Internet
+                        │
+                Application Load Balancer
+                        │
+        ┌───────────────┴───────────────┐
+        │                               │
+   EC2 Auto Scaling               EC2 Auto Scaling
+     Private Subnet                Private Subnet
+        │                               │
+        └───────────────┬───────────────┘
+                        │
+                  PostgreSQL RDS
+                   Private Subnets
 ```
 
 ---
 
-## 🚀 Deployment Steps
+# Deployment Architecture
 
-### Prerequisites
-- AWS account with IAM permissions  
-- Terraform ≥ 1.5  
-- GitHub repository secrets configured:
-  - `AWS_ACCESS_KEY_ID`
-  - `AWS_SECRET_ACCESS_KEY`
-  - `AWS_REGION`
+Infrastructure Repository
 
-### Usage
+```
+GitHub
+    │
+Terraform
+    │
+AWS Infrastructure
+```
 
+Application Repository
 
+```
+GitHub
+      │
+GitHub Actions
+      │
+Build Application
+      │
+Create ZIP Artifact
+      │
+Upload Artifact to Amazon S3
+      │
+AWS Systems Manager
+      │
+EC2 Downloads Latest Artifact
+      │
+PM2 Restart
+      │
+Nginx Reload
+      │
+Application Available via ALB
+```
+
+---
+
+# Repository Structure
+
+```
+terraform/
+│
+├── alb/
+├── asg/
+├── backend/
+├── database/
+├── iam/
+├── networking/
+├── s3/
+├── route53/
+│
+├── main.tf
+├── provider.tf
+├── variables.tf
+├── outputs.tf
+└── terraform.tfvars
+```
+
+---
+
+# Terraform Backend
+
+Terraform state is stored remotely.
+
+- Amazon S3
+- DynamoDB State Locking
+
+Benefits
+
+- Team Collaboration
+- State Locking
+- Versioned State
+- Prevents State Corruption
+
+---
+
+# AWS Services Used
+
+- Amazon VPC
+- EC2
+- Launch Templates
+- Auto Scaling Group
+- Application Load Balancer
+- IAM
+- Amazon RDS PostgreSQL
+- Amazon S3
+- DynamoDB
+- AWS Systems Manager
+- CloudWatch
+
+---
+
+# Prerequisites
+
+- Terraform >= 1.6
+- AWS CLI
+- AWS Account
+- IAM User / IAM Role
+
+---
+
+# Deployment
+
+Initialize Terraform
 
 ```bash
-# Initialize backend
 terraform init
-
-# Validate configuration
-terraform validate
-
-# Plan infrastructure
-terraform plan -var-file=terraform.tfvars
-
-# Apply changes
-terraform apply -var-file=terraform.tfvars
-
 ```
 
+Validate
 
-### 📊 Monitoring & Observability
-CloudWatch Alarms for CPU, RDS storage, and ALB health
+```bash
+terraform validate
+```
 
+Plan
 
-Grafana + Prometheus + Loki (optional) for advanced metrics/logs
+```bash
+terraform plan
+```
 
+Apply
 
-Auto Scaling Groups ensure resilience and cost efficiency
+```bash
+terraform apply
+```
 
+Destroy
 
+```bash
+terraform destroy
+```
 
-### 🛡️ Best Practices Implemented
+---
 
-✅ Modular Terraform code for reusability
+# Related Repository
 
-✅ Remote state management with S3 + DynamoDB locking
+Application deployment is managed separately.
 
-✅ Multi-environment separation (Dev, Stg, Prod)
+## Employee Management System
 
-✅ Approval gates before production rollout
+Features
 
-✅ GitOps-ready with ArgoCD integration
+- React Frontend
+- Express Backend
+- PostgreSQL
+- GitHub Actions CI/CD
+- AWS Systems Manager Deployment
+- PM2
+- Nginx
 
+Deployment Flow
 
+```
+Git Push
 
-### 📖 Documentation
-Architecture diagrams available in docs/architecture/
+↓
 
-Workflow screenshots included for CI/CD visualization
+GitHub Actions
 
-Example alarms, load balancers, and RDS setup shown in AWS console
+↓
 
+Build
 
+↓
 
+Amazon S3
 
-# 👨‍💻 Author
+↓
 
-## Sunil Chouhan  
-### Cloud & DevOps Engineer in training | AWS | Kubernetes | Terraform | CI/CD
+AWS Systems Manager
 
-## ⭐ Contributing
-Contributions are welcome! Fork the repo, create a feature branch, and submit a PR.
+↓
+
+EC2
+
+↓
+
+PM2
+
+↓
+
+Nginx
+
+↓
+
+Application Load Balancer
+```
+
+---
+
+# Best Practices
+
+- Infrastructure as Code
+- Modular Terraform
+- Remote State Management
+- DynamoDB State Locking
+- Private Networking
+- Least Privilege IAM
+- Auto Scaling
+- Infrastructure Separation
+- Immutable Bootstrap
+- SSH-free Deployments using AWS Systems Manager
+
+---
+
+# Future Improvements
+
+- HTTPS using ACM
+- Route53 Domain
+- WAF
+- Blue/Green Deployment
+- Terraform Workspaces
+- Multi-Region Deployment
+
+---
+
+# Author
+
+## Sunil Chouhan
+
+Cloud & DevOps Engineer
+
+AWS • Terraform • Linux • CI/CD • Kubernetes
+
+---
+
+# License
+
+This project is licensed under the MIT License.
