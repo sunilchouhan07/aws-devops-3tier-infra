@@ -6,6 +6,6 @@ variable "project" {
   type = string
 }
 
-variable "cloudfront_distribution_arn" {
+variable "email" {
   type = string
 }

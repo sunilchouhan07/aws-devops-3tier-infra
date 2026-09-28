@@ -6,6 +6,7 @@ variable "project" {
   type = string
 }
 
-variable "cloudfront_distribution_arn" {
+
+variable "vpc_id" {
   type = string
 }

@@ -3,17 +3,23 @@ locals {
 }
 
 locals {
+  project = "ems"
+}
+
+locals {
+  email = "sunilchouhanw@gmail.com"
+}
+
+locals {
+  region = "ap-south-1"
+}
+
+locals {
   instance_type_map = {
     dev  = "t3.micro"
     stg  = "t3.micro"
     prod = "t3.small"
   }
-
-  # ami_id_map = {
-  #   dev = "ami-0ecb62995f68bb549"
-  #   stg = "ami-068c0051b15cdb816"
-  #   prod = "ami-0ecb62995f68bb549"
-  # }
 
   rbd_size_map = {
     dev  = 10
@@ -52,7 +58,7 @@ locals {
     Managed = "Terraform"
   }
 
-  rbd_size          = local.rbd_size_map[terraform.workspace]
+  root_volume_size  = local.rbd_size_map[terraform.workspace]
   username          = local.username_map[terraform.workspace]
   db_name           = local.db_name_map[terraform.workspace]
   instance_class    = local.instance_class_map[terraform.workspace]
