@@ -21,3 +21,6 @@ output "cloudwatch_agent_parameter_arn" {
 output "cloudwatch_agent_parameter_name" {
   value = aws_ssm_parameter.cloudwatch_agent_config.name
 }
+output "backend_current_version_name" {
+  value = aws_ssm_parameter.backend_current_version.name
+}

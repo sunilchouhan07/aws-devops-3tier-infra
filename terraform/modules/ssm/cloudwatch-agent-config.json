@@ -101,22 +101,22 @@
         "collect_list": [
             {
             "file_path": "/var/log/cloud-init-output.log",
-            "log_group_name": "/aws/ec2/testing/cloud-init-output",
+            "log_group_name": "/aws/ec2/${Environment}/cloud-init-output",
             "log_stream_name": "{instance_id}"
             },
             {
             "file_path": "/var/log/cloud-init.log",
-            "log_group_name": "/aws/ec2/testing/cloud-init",
+            "log_group_name": "/aws/ec2/${Environment}/cloud-init",
             "log_stream_name": "{instance_id}"
             },
             {
             "file_path": "/var/log/employee-backend/app.log",
-            "log_group_name": "/testing/backend",
+            "log_group_name": "/${Environment}/backend",
             "log_stream_name": "{instance_id}"
             },
             {
             "file_path": "/var/log/employee-backend/error.log",
-            "log_group_name": "/testing/backend/error",
+            "log_group_name": "/${Environment}/backend/error",
             "log_stream_name": "{instance_id}"
             }
         ]

@@ -14,8 +14,13 @@ resource "aws_launch_template" "main" {
 
   user_data = base64encode(
     templatefile("${path.module}/userdata/bootstrap.sh", {
-      deploy_script                   = file("${path.module}/userdata/deploy.sh"),
+      deploy_script                   = file("${path.module}/userdata/deploy.sh")
       cloudwatch_agent_parameter_name = var.cloudwatch_agent_parameter_name
+      current_version_parameter_name  = var.current_version_parameter_name
+      Environment                     = var.env
+      Project                         = var.project
+      aws_region                      = var.aws_region
+      artifact_bucket_name            = var.artifact_bucket_name
     })
   )
 

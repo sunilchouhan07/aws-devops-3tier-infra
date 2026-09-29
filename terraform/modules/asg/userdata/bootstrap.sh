@@ -12,12 +12,12 @@ APP_DIR="/opt/employee-app"
 SCRIPT_DIR="$${APP_DIR}/scripts"
 RELEASE_DIR="$${APP_DIR}/releases"
 
-S3_BUCKET="testing-employee-artifacts"
-ENVIRONMENT="testing"
-AWS_REGION="us-west-2"
+S3_BUCKET="${artifact_bucket_name}"
+PROJECT="${Project}"
+ENVIRONMENT="${Environment}"
+AWS_REGION="${aws_region}"
 
-CURRENT_VERSION_PARAMETER="/app/$${ENVIRONMENT}/backend/current-version"
-
+CURRENT_VERSION_PARAMETER="${current_version_parameter_name}"
 
 # =================================================
 # 1. Install system dependencies
@@ -72,18 +72,21 @@ aws --version
 
 echo "Checking SSM Agent..."
 
-if systemctl is-active --quiet amazon-ssm-agent; then
+if ! systemctl list-unit-files | grep -q "^amazon-ssm-agent.service"; then
 
-    echo "SSM Agent is running."
+    echo "SSM Agent not installed. Installing..."
 
-else
-
-    echo "Starting SSM Agent..."
-
-    systemctl enable amazon-ssm-agent
-    systemctl start amazon-ssm-agent
-
+    dnf install -y \
+        "https://s3.$${AWS_REGION}.amazonaws.com/amazon-ssm-$${AWS_REGION}/latest/linux_amd64/amazon-ssm-agent.rpm"
 fi
+
+echo "Enabling SSM Agent..."
+
+systemctl enable amazon-ssm-agent
+systemctl start amazon-ssm-agent
+
+echo "SSM Agent status:"
+systemctl status amazon-ssm-agent --no-pager
 
 # =================================================
 # 3A. Install and Configure CloudWatch Agent
@@ -188,11 +191,11 @@ chown employee:employee "$${SCRIPT_DIR}/deploy.sh"
 
 echo "[7/9] Creating systemd service..."
 
-sudo mkdir -p /var/log/employee-backend
-sudo touch /var/log/employee-backend/app.log
-sudo touch /var/log/employee-backend/error.log
-sudo chown -R employee:employee /var/log/employee-backend
-sudo chmod 750 /var/log/employee-backend
+mkdir -p /var/log/employee-backend
+touch /var/log/employee-backend/app.log
+touch /var/log/employee-backend/error.log
+chown -R employee:employee /var/log/employee-backend
+chmod 750 /var/log/employee-backend
 
 cat > /etc/systemd/system/employee-backend.service <<'EOF'
 [Unit]
@@ -264,9 +267,12 @@ echo "Artifact: $${ARTIFACT}"
 echo "Starting deployment..."
 
 "$${SCRIPT_DIR}/deploy.sh" \
+    "$${PROJECT}" \
     "$${ARTIFACT}" \
-    "$${CURRENT_VERSION}"
-
+    "$${CURRENT_VERSION}" \
+    "$${S3_BUCKET}" \
+    "$${ENVIRONMENT}" \
+    "$${AWS_REGION}" 
 
 echo ""
 echo "==============================================="

@@ -65,7 +65,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_unhealthy_targets" {
 
   dimensions = {
     LoadBalancer = var.alb_arn_suffix
-    TagrgetGroup = var.target_group_arn_suffix
+    TargetGroup  = var.target_group_arn_suffix
   }
 
   alarm_actions = [

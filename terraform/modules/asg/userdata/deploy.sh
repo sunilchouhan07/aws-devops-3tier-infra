@@ -2,14 +2,16 @@
 
 set -euo pipefail
 
-APP_NAME="employee-app"
+APP_NAME="ems"
 
-S3_BUCKET="testing-employee-artifacts"
-ENVIRONMENT="testing"
-AWS_REGION="us-west-2"
+PROJECT="$1"
+ARTIFACT="$2"
+VERSION="$3"
+S3_BUCKET="$4"
+ENVIRONMENT="$5"
+AWS_REGION="$6"
 
-ARTIFACT="$1"
-VERSION="$2"
+
 
 BASE_DIR="/opt/employee-app"
 RELEASE_DIR="${BASE_DIR}/releases/${VERSION}"
@@ -39,7 +41,7 @@ echo "==============================================="
 echo "[1/8] Downloading artifact from S3..."
 
 aws s3 cp \
-    "s3://${S3_BUCKET}/${ARTIFACT}" \
+    "s3://${S3_BUCKET}/backend/${ARTIFACT}" \
     "/tmp/${ARTIFACT}" \
     --region "${AWS_REGION}"
 
@@ -88,19 +90,25 @@ npm ci --omit=dev
 echo "[5/8] Reading database configuration..."
 
 DB_SECRET_ARN=$(aws ssm get-parameter \
-    --name "/app/${ENVIRONMENT}/db/secret-arn" \
+    --name "/app/${PROJECT}-${ENVIRONMENT}/db/secret-arn" \
     --query 'Parameter.Value' \
     --output text \
     --region "${AWS_REGION}")
 
 DB_HOST=$(aws ssm get-parameter \
-    --name "/app/${ENVIRONMENT}/db/host" \
+    --name "/app/${PROJECT}-${ENVIRONMENT}/db/host" \
     --query 'Parameter.Value' \
     --output text \
     --region "${AWS_REGION}")
 
 DB_PORT=$(aws ssm get-parameter \
-    --name "/app/${ENVIRONMENT}/db/port" \
+    --name "/app/${PROJECT}-${ENVIRONMENT}/db/port" \
+    --query 'Parameter.Value' \
+    --output text \
+    --region "${AWS_REGION}")
+
+DB_NAME=$(aws ssm get-parameter \
+    --name "/app/${PROJECT}-${ENVIRONMENT}/db/name" \
     --query 'Parameter.Value' \
     --output text \
     --region "${AWS_REGION}")
@@ -134,7 +142,7 @@ echo "[7/8] Creating runtime environment..."
 cat > "${RELEASE_DIR}/.env" <<EOF
 DB_HOST="${DB_HOST}"
 DB_PORT="${DB_PORT}"
-DB_NAME="postgres"
+DB_NAME="${DB_NAME}"
 DB_USER="${DB_USER}"
 DB_PASSWORD="${DB_PASSWORD}"
 DB_SSL="true"

@@ -69,8 +69,8 @@ module "alb" {
   project             = local.project
   vpc_id              = module.vpc.vpc_id
   alb_sub             = module.vpc.alb_subnet_ids
-  health_interval     = 5
-  timeout             = 30
+  health_interval     = 30
+  timeout             = 5
   alb_sg_id           = module.sg.alb_sg_id
   healthy_threshold   = 3
   unhealthy_threshold = 5
@@ -85,7 +85,6 @@ module "asg" {
   project = local.project
 
   vpc_id                          = module.vpc.vpc_id
-  alb_sg_id                       = module.sg.alb_sg_id
   subnet_id                       = module.vpc.instance_subnet_ids
   tg_arn                          = module.alb.target_group_arn
   ami_id                          = data.aws_ami.amazon_linux.id
@@ -96,8 +95,12 @@ module "asg" {
   min_size                        = 2
   max_size                        = 4
   desired_capacity                = 2
-  health_check_period             = 120
+  health_check_period             = 300
   ec2_role                        = module.iam_role.ec2_role_name
+  depends_on                      = [module.iam_role]
+  aws_region                      = local.region
+  current_version_parameter_name  = module.ssm.backend_current_version_name
+  artifact_bucket_name            = module.s3.artifact_bucket_name
 }
 
 
@@ -182,7 +185,8 @@ module "ssm" {
   db_host         = module.rds.db_host
   db_port         = module.rds.db_port
   db_secret_arn   = module.rds.db_secret_arn
-  current_version = "v2"
+  current_version = var.current_version
+  db_name         = module.rds.db_name
 }
 
 
@@ -193,8 +197,6 @@ module "s3" {
 
   env     = local.env
   project = local.project
-  cloudfront_distribution_arn = module.cloudfront.distribution_arn
-
 }
 
 
@@ -204,7 +206,7 @@ module "cloudwatch" {
   source                      = "./modules/cloudwatch"
   env                         = local.env
   project                     = local.project
-  sns_topic_arn                   = module.sns_topic.sns_topic_arn
+  sns_topic_arn               = module.sns_topic.sns_topic_arn
   alb_arn_suffix              = module.alb.lb_suffix
   target_group_arn_suffix     = module.alb.target_group_suffix
   asg_name                    = module.asg.asg_name

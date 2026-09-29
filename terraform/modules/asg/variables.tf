@@ -11,10 +11,6 @@ variable "vpc_id" {
   type = string
 }
 
-variable "alb_sg_id" {
-  type = string
-}
-
 variable "subnet_id" {
   type = list(string)
 }
@@ -61,5 +57,17 @@ variable "app_sg_id" {
 }
 
 variable "cloudwatch_agent_parameter_name" {
+  type = string
+}
 
+variable "aws_region" {
+  type = string
+}
+
+variable "current_version_parameter_name" {
+  type = string
+}
+
+variable "artifact_bucket_name" {
+  type = string
 }

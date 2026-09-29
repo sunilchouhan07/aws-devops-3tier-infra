@@ -32,10 +32,16 @@ resource "aws_ssm_parameter" "backend_current_version" {
 
 
 resource "aws_ssm_parameter" "cloudwatch_agent_config" {
-  name        = "/${var.project}-${var.env}/monitoring/cloudwatch-agent"
+  name        = "/app/${var.project}-${var.env}/monitoring/cloudwatch-agent"
   description = "CloudWatch Agent configuration for ${var.project}-${var.env} EC2 instances"
   type        = "String"
   tier        = "Standard"
   value       = file("${path.module}/cloudwatch-agent-config.json")
 }
 
+
+resource "aws_ssm_parameter" "db_name" {
+  name  = "/app/${var.project}-${var.env}/db/name"
+  type  = "String"
+  value = var.db_name
+}

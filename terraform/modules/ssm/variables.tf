@@ -22,3 +22,6 @@ variable "current_version" {
   type = string
 }
 
+variable "db_name" {
+  type = string
+}
