@@ -45,3 +45,9 @@ resource "aws_ssm_parameter" "db_name" {
   type  = "String"
   value = var.db_name
 }
+
+resource "aws_ssm_parameter" "cloudfront_distribution_id" {
+  name  = "/app/${var.project}-${var.env}/cloudfront/distribution-id"
+  type  = "String"
+  value = var.cloudfront_distribution_id
+}

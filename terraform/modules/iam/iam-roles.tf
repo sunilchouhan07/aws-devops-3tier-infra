@@ -1,3 +1,120 @@
+# EMS OIDC for CICD 
+
+# CI 
+
+resource "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = [
+    "sts.amazonaws.com"
+  ]
+}
+
+resource "aws_iam_role" "github_ci" {
+  name = "${var.project}-${var.env}-github-ci-role"
+
+  assume_role_policy = data.aws_iam_policy_document.github_ci_assume_role.json
+}
+
+
+
+
+data "aws_iam_policy_document" "github_ci_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+
+    actions = [
+      "sts:AssumeRoleWithWebIdentity"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values = [
+        "repo:sunilchouhan07/employee_management_system:ref:refs/tags/v*"
+      ]
+    }
+  }
+}
+
+
+data "aws_iam_policy_document" "ems_ci" {
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject"
+    ]
+
+    resources = [
+      "${var.app_artifacts_arn}/backend/*",
+      "${var.frontend_build_arn}/*"
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:ListBucket"
+    ]
+
+    resources = [
+      var.app_artifacts_arn,
+      var.frontend_build_arn
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "ssm:GetParameter",
+      "ssm:PutParameter",
+      "ssm:SendCommand",
+      "ssm:ListCommandInvocations"
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+  effect = "Allow"
+
+  actions = [
+    "cloudfront:CreateInvalidation"
+  ]
+
+  resources = ["*"]
+}
+
+}
+
+resource "aws_iam_role_policy" "github_ci" {
+  name = "${var.project}-${var.env}-github-ci-policy"
+  role = aws_iam_role.github_ci.id
+
+  policy = data.aws_iam_policy_document.ems_ci.json
+}
+
+
+
+
+
+# EC2 IAM Role
+
 resource "aws_iam_role" "ec2_role" {
   name = "${var.project}-${var.env}-ec2-role"
 

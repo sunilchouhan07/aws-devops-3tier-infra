@@ -25,3 +25,7 @@ variable "current_version" {
 variable "db_name" {
   type = string
 }
+
+variable "cloudfront_distribution_id" {
+  type = string
+}

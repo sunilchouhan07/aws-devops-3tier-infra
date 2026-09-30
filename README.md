@@ -1,351 +1,587 @@
-# 🚀 AWS 3-Tier Infrastructure on AWS using Terraform
+# 🚀 Employee Management System — AWS Infrastructure
 
+Terraform-based AWS infrastructure for the Employee Management System.
 
-
-Production-ready **AWS 3-Tier Infrastructure** built with **Terraform**.
-
-This repository provisions the complete infrastructure required to host scalable web applications on AWS. It follows Infrastructure as Code (IaC) best practices and prepares EC2 instances for automated deployments.
+This repository provisions and manages the AWS infrastructure required to run the application using a secure, scalable, and highly available **3-tier architecture**.
 
 
 ![Terraform](https://img.shields.io/badge/Terraform-IaC-7B42BC?logo=terraform)       ![AWS](https://img.shields.io/badge/AWS-Cloud-orange?logo=amazonaws)       ![GitHub Actions](https://img.shields.io/badge/GitHub-Actions-blue?logo=githubactions)       ![License](https://img.shields.io/badge/license-MIT-green)       ![Infrastructure](https://img.shields.io/badge/type-Infrastructure-blue)
 
-> **Note**
->
-> This repository provisions infrastructure only.
->
-> Application deployment is handled separately by:
->
-> 🔗 employee-management-system  
 
 ---
 
-# Architecture
+## Architecture
 
 ![Architecture Diagram](docs/architecture/architecture.png)
 
-## Infrastructure Components
+---
 
-- Amazon VPC
-- Public & Private Subnets (2 AZ)
-- Internet Gateway
-- NAT Gateway
-- Route Tables
-- Application Load Balancer
-- Auto Scaling Group
-- Launch Template
-- EC2 Instances
-- IAM Roles
-- Security Groups
-- Amazon RDS PostgreSQL
-- Amazon S3
-- DynamoDB
-- AWS Systems Manager (SSM)
+## AWS Services
+
+### Networking
+
+* Amazon VPC
+* Public Subnets
+* Private Subnets
+* Internet Gateway
+* NAT Gateway
+* Route Tables
+* Security Groups
+
+### Compute & Load Balancing
+
+* Amazon EC2
+* EC2 Auto Scaling Group
+* Application Load Balancer
+
+### Database
+
+* Amazon RDS PostgreSQL
+
+### Storage & Content Delivery
+
+* Amazon S3
+* Amazon CloudFront
+
+### Security & Access
+
+* AWS IAM
+* AWS Systems Manager
+* AWS Secrets Manager
+* AWS WAF
+
+### Monitoring
+
+* Amazon CloudWatch
+* CloudWatch Agent
+
+### Infrastructure as Code
+
+* Terraform
+* Amazon S3 — Remote Terraform State
+* Amazon DynamoDB — Terraform State Locking
 
 ---
 
-# Repository Purpose
+# High-Level Architecture
 
-This repository is responsible for:
-
-- Provisioning AWS Infrastructure
-- Creating networking resources
-- Creating EC2 Auto Scaling Groups
-- Creating Application Load Balancer
-- Creating PostgreSQL Database
-- Creating IAM Roles
-- Creating S3 backend
-- Creating DynamoDB locking table
-- Bootstrapping EC2 instances
-- Preparing servers for application deployments
-
-This repository **does not deploy application code.**
-
----
-
-# EC2 Bootstrap
-
-EC2 instances are automatically configured using **Terraform User Data**.
-
-During instance launch the bootstrap script installs and configures:
-
-- AWS CLI v2
-- Node.js
-- PM2
-- Nginx
-- Amazon SSM Agent
-- Deployment directories
-- Backend environment file
-- Reverse proxy configuration
-
-After provisioning every EC2 instance is immediately ready to receive deployments through AWS Systems Manager.
-
----
-
-# Infrastructure Architecture
-
-```
-                    Internet
-                        │
-                Application Load Balancer
-                        │
-        ┌───────────────┴───────────────┐
-        │                               │
-   EC2 Auto Scaling               EC2 Auto Scaling
-     Private Subnet                Private Subnet
-        │                               │
-        └───────────────┬───────────────┘
-                        │
-                  PostgreSQL RDS
-                   Private Subnets
+```text
+                            Internet
+                               │
+                               ▼
+                           CloudFront
+                          /         \
+                         /           \
+                   Frontend          API
+                      │               │
+                      ▼               ▼
+                     S3              ALB
+                                  │
+                           ┌──────┴──────┐
+                           │             │
+                           ▼             ▼
+                        EC2-A         EC2-B
+                           │             │
+                           └──────┬──────┘
+                                  │
+                                  ▼
+                             RDS PostgreSQL
 ```
 
+The frontend is delivered from **Amazon S3 through CloudFront**.
+
+API requests using `/api/*` are routed through **CloudFront to the Application Load Balancer**.
+
+The ALB distributes traffic to EC2 instances managed by an **Auto Scaling Group**.
+
+The EC2 application tier communicates with PostgreSQL running on **Amazon RDS**.
+
 ---
 
-# Deployment Architecture
+# Network Architecture
 
-Infrastructure Repository
+The infrastructure uses a **multi-AZ VPC design** with separate public and private subnets.
 
-```
-GitHub
+```text
+VPC
+│
+├── Availability Zone 1
+│   │
+│   ├── Public Subnet
+│   │   ├── Application Load Balancer
+│   │   └── NAT Gateway
+│   │
+│   ├── Private Application Subnet
+│   │   └── EC2 Auto Scaling
+│   │
+│   └── Private Database Subnet
+│       └── RDS PostgreSQL
+│
+└── Availability Zone 2
     │
-Terraform
+    ├── Public Subnet
+    │   └── Application Load Balancer
     │
-AWS Infrastructure
-```
-
-Application Repository
-
-```
-GitHub
-      │
-GitHub Actions
-      │
-Build Application
-      │
-Create ZIP Artifact
-      │
-Upload Artifact to Amazon S3
-      │
-AWS Systems Manager
-      │
-EC2 Downloads Latest Artifact
-      │
-PM2 Restart
-      │
-Nginx Reload
-      │
-Application Available via ALB
+    ├── Private Application Subnet
+    │   └── EC2 Auto Scaling
+    │
+    └── Private Database Subnet
+        └── RDS PostgreSQL
 ```
 
 ---
 
-# Repository Structure
+# Application Traffic Flow
+
+```text
+User
+ │
+ ▼
+CloudFront
+ │
+ └── /api/*
+        │
+        ▼
+       ALB
+        │
+        ▼
+EC2 Auto Scaling Group
+        │
+        ▼
+Node.js Application
+        │
+        ▼
+RDS PostgreSQL
+```
+
+The application servers are deployed in **private subnets** and are not directly exposed to the internet.
+
+Outbound internet access required by private instances is provided through the **NAT Gateway**.
+
+---
+
+# Security Architecture
+
+Security groups control communication between the application tiers.
+
+```text
+Internet
+   │
+   ▼
+ALB
+80 / 443
+   │
+   ▼
+EC2
+5000
+   │
+   ▼
+RDS
+5432
+```
+
+## Security Rules
+
+* ALB accepts HTTP/HTTPS traffic from the internet.
+* EC2 accepts application traffic only from the ALB security group.
+* RDS accepts PostgreSQL traffic only from the application security group.
+* Database instances are deployed in private subnets.
+* EC2 instances are managed using AWS Systems Manager.
+* IAM roles are used instead of hard-coded AWS credentials.
+* GitHub Actions uses OIDC-based authentication.
+
+---
+
+# Terraform Infrastructure
+
+The infrastructure is implemented using **reusable Terraform modules**.
+
+## Repository Structure
 
 ```text
 .
-├── .github/
-│   └── workflows/          # GitHub Actions workflows
-├── docs/                   # Architecture diagrams and screenshots
 ├── terraform/
-│   ├── backend/            # Remote backend configuration
+│   │
 │   ├── modules/
-│   │   ├── app_lb/         # Application Load Balancer
-│   │   ├── asg/            # Auto Scaling Group
-│   │   ├── rdsInstance/    # PostgreSQL RDS
-│   │   ├── s3/             # S3 resources
-│   │   └── vpc/            # Networking
-│   ├── albmain.tf
-│   ├── asgmain.tf
-│   ├── backend.tf
-│   ├── data.tf
+│   │   ├── vpc/
+│   │   ├── iam/
+│   │   ├── ec2/
+│   │   ├── alb/
+│   │   ├── rds/
+│   │   ├── s3/
+│   │   ├── cloudfront/
+│   │   ├── ssm/
+│   │   └── monitoring/
+│   │
+│   │
+│   ├── main.tf
+│   ├── variables.tf
 │   ├── locals.tf
-│   ├── output.tf
-│   ├── provider.tf
-│   ├── rdsmain.tf
-│   ├── s3.tf
-│   ├── terraform.tfvars
-│   ├── variable.tf
-│   └── vpcmain.tf
-├── README.md
-└── .gitignore
+│   ├── outputs.tf
+│   ├── providers.tf
+│   └── terraform.tfvars
+│
+└── README.md
 ```
 
 ---
 
-# Terraform Backend
+# Terraform Remote State Management
 
-Terraform state is stored remotely.
+Terraform state is managed remotely using **Amazon S3 for remote state storage** and **Amazon DynamoDB for state locking**.
 
-- Amazon S3
-- DynamoDB State Locking
+```text
+                    Terraform
+                        │
+                        ▼
+              Amazon S3 Backend
+                        │
+                        ▼
+               Terraform State
+                        │
+                        │
+                        ▼
+               DynamoDB Table
+                 State Locking
+```
 
-Benefits
+## Amazon S3 — Remote State Storage
 
-- Team Collaboration
-- State Locking
-- Versioned State
-- Prevents State Corruption
+Amazon S3 is used to store the Terraform state file remotely.
+
+This provides:
+
+* Centralized state storage
+* Persistent state management
+* Shared access for team and CI/CD workflows
+* Protection against losing local Terraform state
+
+## Amazon DynamoDB — State Locking
+
+Amazon DynamoDB is used for **Terraform state locking**.
+
+State locking prevents multiple Terraform operations from modifying the same infrastructure state simultaneously.
+
+```text
+Terraform Operation
+        │
+        ▼
+   Acquire Lock
+        │
+        ▼
+  DynamoDB Table
+        │
+        ▼
+Modify Infrastructure
+        │
+        ▼
+   Update S3 State
+        │
+        ▼
+   Release Lock
+```
+
+### State Management Flow
+
+```text
+Terraform
+   │
+   ├──► DynamoDB
+   │      └── Acquire State Lock
+   │
+   ├──► AWS Infrastructure
+   │      └── Create / Update Resources
+   │
+   └──► S3
+          └── Store Updated Terraform State
+```
+
+> **S3 stores the Terraform state, while DynamoDB provides state locking.** These services have separate responsibilities and work together to provide reliable remote state management.
 
 ---
 
-# AWS Services Used
+# Terraform Commands
 
-- Amazon VPC
-- EC2
-- Launch Templates
-- Auto Scaling Group
-- Application Load Balancer
-- IAM
-- Amazon RDS PostgreSQL
-- Amazon S3
-- DynamoDB
-- AWS Systems Manager
-- CloudWatch
-
----
-
-# Prerequisites
-
-- Terraform >= 1.6
-- AWS CLI
-- AWS Account
-- IAM User / IAM Role
-
----
-
-# Deployment
-
-Initialize Terraform
+## Initialize Terraform
 
 ```bash
 terraform init
 ```
 
-Validate
+Terraform initializes the providers, modules, and remote backend.
+
+## Format Terraform
+
+```bash
+terraform fmt -recursive
+```
+
+## Validate Configuration
 
 ```bash
 terraform validate
 ```
 
-Plan
+## Create Execution Plan
 
 ```bash
 terraform plan
 ```
 
-Apply
+## Apply Infrastructure
 
 ```bash
 terraform apply
 ```
 
-Destroy
+## Destroy Infrastructure
 
 ```bash
 terraform destroy
 ```
 
+> **Always review the Terraform plan before applying or destroying infrastructure.**
+
+---
+
+# Terraform Modules
+
+The infrastructure is divided into reusable modules.
+
+| Module       | Responsibility                               |
+| ------------ | -------------------------------------------- |
+| `vpc`        | VPC, subnets, routing and NAT                |
+| `iam`        | IAM roles and policies                       |
+| `ec2`        | Launch template and Auto Scaling             |
+| `alb`        | Application Load Balancer                    |
+| `rds`        | PostgreSQL database                          |
+| `s3`         | Frontend and application artifact storage    |
+| `cloudfront` | CDN and API routing                          |
+| `ssm`        | Parameter Store and deployment configuration |
+| `monitoring` | CloudWatch and monitoring configuration      |
+
+---
+
+# CI/CD Authentication
+
+GitHub Actions authenticates with AWS using **OpenID Connect (OIDC)**.
+
+No long-lived AWS access keys are required for the CI/CD workflow.
+
+```text
+GitHub Actions
+      │
+      ▼
+GitHub OIDC
+      │
+      ▼
+AWS IAM Role
+      │
+      ▼
+AWS Resources
+```
+
+The GitHub Actions IAM role provides the permissions required for application build, artifact upload, deployment, and CloudFront cache invalidation.
+
+---
+
+# Application and Infrastructure Separation
+
+The infrastructure and application are maintained in separate repositories.
+
+```text
+┌─────────────────────────────┐
+│ Infrastructure Repository   │
+│                             │
+│ Terraform                   │
+│     │                       │
+│     ▼                       │
+│ AWS Infrastructure          │
+└─────────────────────────────┘
+
+
+┌─────────────────────────────┐
+│ Application Repository      │
+│                             │
+│ React + Node.js             │
+│     │                       │
+│     ▼                       │
+│ GitHub Actions              │
+│     │                       │
+│     ▼                       │
+│ AWS Deployment              │
+└─────────────────────────────┘
+```
+
+The infrastructure repository manages the **AWS platform**.
+
+The application repository manages **application source code and application CI/CD**.
+
+---
+
+# Application Deployment Architecture
+
+```text
+Application Repository
+        │
+        ▼
+   GitHub Actions
+        │
+        ├─────────────────────┐
+        │                     │
+        ▼                     ▼
+   Frontend Build       Backend Package
+        │                     │
+        ▼                     ▼
+       S3                 S3 Artifact
+        │                     │
+        ▼                     ▼
+   CloudFront                SSM
+                              │
+                              ▼
+                             EC2
+```
+
+---
+
+# Backend Deployment
+
+Backend releases are packaged as **immutable, versioned artifacts**.
+
+Example:
+
+```text
+employee-backend-v3.zip
+```
+
+## Deployment Flow
+
+```text
+GitHub Actions
+      │
+      ▼
+S3 Artifact Bucket
+      │
+      ▼
+SSM Run Command
+      │
+      ▼
+EC2 Application Server
+      │
+      ▼
+Node.js Backend
+      │
+      ▼
+Health Check
+```
+
+The currently deployed application version is maintained using **AWS Systems Manager Parameter Store**.
+
+---
+
+# Frontend Deployment
+
+The React frontend is built and uploaded to Amazon S3.
+
+```text
+React Build
+    │
+    ▼
+S3
+    │
+    ▼
+CloudFront
+    │
+    ▼
+Users
+```
+
+After deployment, GitHub Actions triggers a **CloudFront cache invalidation** so that the latest frontend version is served.
+
+---
+
+# Monitoring and Logging
+
+Amazon CloudWatch is used for application and infrastructure monitoring.
+
+The **CloudWatch Agent** collects application logs and system metrics from EC2 instances.
+
+```text
+EC2
+ │
+ ├── Application Logs
+ │
+ ├── System Metrics
+ │
+ └── CloudWatch Agent
+          │
+          ▼
+       CloudWatch
+          │
+          ▼
+       Monitoring
+```
+
+Environment-aware log groups are used for application monitoring.
+
+Example:
+
+```text
+/dev/backend
+/dev/backend/error
+```
+
+---
+
+# Environment
+
+## Current Implementation
+
+```text
+Environment: dev
+AWS Region: ap-south-1
+```
+
+The Terraform configuration is environment-aware and uses environment-specific resource naming and configuration.
+
+Example:
+
+```text
+ems-dev-*
+```
+
+The infrastructure design can support additional environments such as **staging** and **production** when required.
+
+---
+
+# Important Infrastructure Outputs
+
+Terraform exposes important infrastructure values including:
+
+* CloudFront Distribution ID
+* CloudFront Domain Name
+* Frontend S3 Bucket
+* Backend Artifact S3 Bucket
+* GitHub Actions IAM Role ARN
+* VPC resources
+
 ---
 
 # Related Repository
 
-This infrastructure is used by the following application repository.
+The application source code and application CI/CD are maintained separately.
 
-| Repository | Description |
-|------------|-------------|
-| **Employee Management System** | Full-stack React + Express application with GitHub Actions CI/CD, S3 artifact deployment and AWS Systems Manager (SSM) based deployments. |
+**Application Repository:**
 
-🔗 **Application Repository:**  
+```text
 https://github.com/sunilchouhan07/employee_management_system
-
-## Employee Management System
-
-Features
-
-- React Frontend
-- Express Backend
-- PostgreSQL
-- GitHub Actions CI/CD
-- AWS Systems Manager Deployment
-- PM2
-- Nginx
-
-Deployment Flow
-
 ```
-Git Push
-
-↓
-
-GitHub Actions
-
-↓
-
-Build
-
-↓
-
-Amazon S3
-
-↓
-
-AWS Systems Manager
-
-↓
-
-EC2
-
-↓
-
-PM2
-
-↓
-
-Nginx
-
-↓
-
-Application Load Balancer
-```
-
----
-
-# Best Practices
-
-- Infrastructure as Code
-- Modular Terraform
-- Remote State Management
-- DynamoDB State Locking
-- Private Networking
-- Least Privilege IAM
-- Auto Scaling
-- Infrastructure Separation
-- Immutable Bootstrap
-- SSH-free Deployments using AWS Systems Manager
-
----
-
-# Future Improvements
-
-- HTTPS using ACM
-- Route53 Domain
-- WAF
-- Blue/Green Deployment
-- Terraform Workspaces
-- Multi-Region Deployment
 
 ---
 
 # Author
 
-## Sunil Chouhan
+**Sunil Chouhan**
 
-Cloud & DevOps Engineer
-
-AWS • Terraform • Linux • CI/CD • Kubernetes
-
----
-
-# License
-
-This project is licensed under the MIT License.
+Cloud Engineer Intern
+B.Tech — Cloud Computing

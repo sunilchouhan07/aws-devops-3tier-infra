@@ -139,6 +139,8 @@ module "iam_role" {
   db_parameter_port              = module.ssm.db_port_arn
   current_version                = module.ssm.backend_current_version_arn
   db_parameter_secret_arn        = module.ssm.db_secret_arn
+  app_artifacts_arn              = module.s3.artifact_bucket_arn
+  frontend_build_arn             = module.s3.frontend_bucket_arn
 
 }
 
@@ -182,11 +184,12 @@ module "ssm" {
   env     = local.env
   project = local.project
 
-  db_host         = module.rds.db_host
-  db_port         = module.rds.db_port
-  db_secret_arn   = module.rds.db_secret_arn
-  current_version = var.current_version
-  db_name         = module.rds.db_name
+  db_host                    = module.rds.db_host
+  db_port                    = module.rds.db_port
+  db_secret_arn              = module.rds.db_secret_arn
+  current_version            = var.current_version
+  db_name                    = module.rds.db_name
+  cloudfront_distribution_id = module.cloudfront.distribution_id
 }
 
 

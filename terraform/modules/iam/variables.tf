@@ -33,3 +33,11 @@ variable "current_version" {
 variable "cloudwatch_agent_parameter_arn" {
   type = string
 }
+
+variable "app_artifacts_arn" {
+  type = string
+}
+
+variable "frontend_build_arn" {
+  type = string
+}
